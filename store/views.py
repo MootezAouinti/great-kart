@@ -1,0 +1,131 @@
+from django.shortcuts import get_object_or_404, render, redirect
+from django.db.models import Q
+from django.core.paginator import Paginator
+from django.contrib import messages
+
+from Category.models import Category
+from carts.models import CartItem
+from carts.views import _cart_id
+from store.models import Product, ReviewRating, ProductGallery
+from .forms import ReviewForm
+from orders.models import OrderProduct
+
+
+# ======================= STORE VIEW =======================
+def store(request, category_slug=None):
+    categories = None
+    products = None
+
+    if category_slug is not None:
+        categories = get_object_or_404(Category, slug=category_slug)
+        products = Product.objects.filter(category=categories, is_available=True)
+        paginator = Paginator(products, 1)
+        page = request.GET.get('page')
+        paged_products = paginator.get_page(page)
+        product_count = products.count()
+    else:
+        products = Product.objects.filter(is_available=True).order_by('id')
+        paginator = Paginator(products, 3)
+        page = request.GET.get('page')
+        paged_products = paginator.get_page(page)
+        product_count = products.count()
+
+    context = {
+        'products': paged_products,
+        'product_count': product_count,
+    }
+    return render(request, 'store/store.html', context)
+
+
+# ======================= PRODUCT DETAIL VIEW =======================
+def product_detail(request, category_slug, product_slug):
+    try:
+        single_product = Product.objects.get(category__slug=category_slug, slug=product_slug)
+        in_cart = CartItem.objects.filter(cart__cart_id=_cart_id(request), product=single_product).exists()
+    except Product.DoesNotExist:
+        single_product = None
+        in_cart = False
+
+    if request.user.is_authenticated:
+        try:
+            orderproduct = OrderProduct.objects.filter(user=request.user, product_id=single_product.id).exists()
+        except OrderProduct.DoesNotExist:
+            orderproduct = None
+    else:
+        orderproduct = None
+
+    # get the reviews
+    reviews = ReviewRating.objects.filter(product_id=single_product.id, status=True)
+
+    #get the product gallery
+    product_gallery = ProductGallery.objects.filter(product_id=single_product.id)
+
+    context = {
+        'single_product': single_product,
+        'in_cart': in_cart,
+        'orderproduct': orderproduct,
+        'reviews': reviews,
+        'product_gallery': product_gallery,
+    }
+    return render(request, 'store/product_detail.html', context)
+
+
+# ======================= SEARCH VIEW =======================
+def search(request):
+    products = []
+    product_count = 0
+
+    if 'keyword' in request.GET:
+        keyword = request.GET['keyword']
+        if keyword:
+            products = Product.objects.order_by('-created_date').filter(
+                Q(description__icontains=keyword) | Q(product_name__icontains=keyword)
+            )
+            product_count = products.count()
+
+    context = {
+        'products': products,
+        'product_count': product_count,
+    }
+    return render(request, 'store/store.html', context)
+
+
+# ======================= SUBMIT REVIEW =======================
+def submit_review(request, product_id):
+    url = request.META.get('HTTP_REFERER')
+    product = get_object_or_404(Product, id=product_id)
+
+    if request.method == 'POST':
+        try:
+            # ✅ Update existing review
+            review = ReviewRating.objects.get(user=request.user, product=product)
+            form = ReviewForm(request.POST, instance=review)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Thank you! Your review has been updated.')
+            else:
+                print("❌ FORM ERRORS (update):", form.errors)
+                messages.error(request, 'There was a problem submitting your review.')
+
+        except ReviewRating.DoesNotExist:
+            # ✅ Create new review
+            form = ReviewForm(request.POST)
+            if form.is_valid():
+                data = ReviewRating()
+                data.subject = form.cleaned_data['subject']
+                data.review = form.cleaned_data['review']
+                data.rating = request.POST.get('rating')  # lowercase matches HTML input
+                data.ip = request.META.get('REMOTE_ADDR')
+                data.product = product
+                data.user = request.user
+                data.save()
+                messages.success(request, 'Thank you! Your review has been submitted.')
+            else:
+                print("❌ FORM ERRORS (create):", form.errors)
+                messages.error(request, 'There was a problem submitting your review.')
+
+        # ✅ Always return redirect at the end
+        return redirect(url)
+
+    # If not POST
+    return redirect(url)
