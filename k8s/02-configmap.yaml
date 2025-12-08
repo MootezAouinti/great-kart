@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: django-config
+  namespace: greatkart
+data:
+  DJANGO_DEBUG: "True"

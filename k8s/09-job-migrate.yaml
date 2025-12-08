@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: django-migrate
+  namespace: greatkart
+spec:
+  template:
+    spec:
+      containers:
+      - name: migrate
+        image: mootez244/greatkart:latest
+        command: ["python", "manage.py", "migrate"]
+        env:
+        - name: DJANGO_DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: django-config
+              key: DJANGO_DEBUG
+        - name: DJANGO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: django-secret
+              key: DJANGO_SECRET_KEY
+      restartPolicy: Never
+  backoffLimit: 0
