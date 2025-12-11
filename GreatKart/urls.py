@@ -28,7 +28,7 @@ urlpatterns = [
     path('cart/', include('carts.urls')),
     path('accounts/', include('account.urls')),
     path('orders/', include('orders.urls')), # hedha url taa projet main
-    path('', include('django_prometheus.urls')),
+    # path('', include('django_prometheus.urls')),
 
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

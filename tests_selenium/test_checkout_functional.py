@@ -12,29 +12,29 @@ def test_checkout_functional():
     driver = webdriver.Chrome(service=service)
 
     try:
-        # 1️⃣ Log in first
+        # Log in first
         driver.get("http://127.0.0.1:8000/accounts/login/")
         driver.maximize_window()
 
         email = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "email")))
         password = driver.find_element(By.NAME, "password")
 
-        email.send_keys("testuser@gmail.com")     # ✅ Replace with your test user
+        email.send_keys("testuser@gmail.com") 
         password.send_keys("Password@123")
         password.submit()
         time.sleep(2)
 
-        # 2️⃣ Go to store
+        # Go to store
         driver.get("http://127.0.0.1:8000/store/")
         time.sleep(1)
 
-        # 3️⃣ Click the first product
+        # Click the first product
         product = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "a.title"))
         )
         product.click()
 
-        # 4️⃣ Select options if available
+        # Select options if available
         try:
             color = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.NAME, "color")))
             color.click()
@@ -49,14 +49,15 @@ def test_checkout_functional():
         except:
             print("⚠️ No size option found")
 
-        # 5️⃣ Add to cart
+        # Add to cart
         add_btn = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[@type='submit' and .//span[text()='Add to Cart']]"))
+            EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Add')]"))
         )
+
         add_btn.click()
         time.sleep(2)
 
-        # 6️⃣ Go to cart and click Checkout
+        # Go to cart and click Checkout
         driver.get("http://127.0.0.1:8000/cart/")
         time.sleep(2)
 
@@ -66,7 +67,7 @@ def test_checkout_functional():
         checkout_btn.click()
         time.sleep(3)
 
-        # 7️⃣ Fill checkout fields
+        # Fill checkout fields
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "first_name"))).send_keys("Mootaz")
         driver.find_element(By.NAME, "last_name").send_keys("Aouinti")
         driver.find_element(By.NAME, "email").send_keys("testuser@gmail.com")
@@ -78,14 +79,14 @@ def test_checkout_functional():
         driver.find_element(By.NAME, "country").send_keys("Tunisia")
         driver.find_element(By.NAME, "order_note").send_keys("Please deliver quickly")
 
-        # 8️⃣ Click Place Order
+        # Click Place Order
         place_order_btn = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//button[@type='submit' and @name='submit']"))
         )
         place_order_btn.click()
         time.sleep(3)
 
-        # 9️⃣ Verify redirect or confirmation
+        # Verify redirect or confirmation
         assert "Order" in driver.title or "Thank you" in driver.page_source or "Payment" in driver.page_source
 
     finally:

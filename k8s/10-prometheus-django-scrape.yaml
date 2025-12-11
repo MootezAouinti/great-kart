@@ -13,6 +13,6 @@ spec:
     matchNames:
       - greatkart
   endpoints:
-    - port: http
+    - port: http   
       path: /metrics
       interval: 15s

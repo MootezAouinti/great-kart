@@ -28,6 +28,6 @@ def test_average_and_count_reviews():
     ReviewRating.objects.create(product=product, user=user1, subject="Good", review="Nice phone", rating=4, status=True)
     ReviewRating.objects.create(product=product, user=user2, subject="Excellent", review="Perfect", rating=5, status=True)
 
-    # ✅ Test average and count
+    # Test average and count
     assert product.countReview() == 2
     assert round(product.averageReview(), 1) == 4.5

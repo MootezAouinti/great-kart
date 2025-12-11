@@ -7,17 +7,17 @@ import pytest
 
 @pytest.mark.functional
 def test_login_functional():
-    # 🔧 Setup Chrome WebDriver
+    # Setup Chrome WebDriver
     service = Service("C:/Users/Mootaz Aouinti/Downloads/chromedriver-win64/chromedriver-win64/chromedriver.exe")
     driver = webdriver.Chrome(service=service)
 
     try:
-        # 1️⃣ Open your local Django server
+        # Open your local Django server
         driver.get("http://127.0.0.1:8000/accounts/login/")
         driver.maximize_window()
         time.sleep(2)
 
-        # 2️⃣ Fill email and password
+        # Fill email and password
         email_input = driver.find_element(By.NAME, "email")
         password_input = driver.find_element(By.NAME, "password")
 
@@ -27,7 +27,7 @@ def test_login_functional():
 
         time.sleep(3)
 
-        # 3️⃣ Verify redirection to dashboard
+        # Verify redirection to dashboard
         assert "Dashboard" in driver.page_source
 
     finally:
